@@ -1,0 +1,1368 @@
+<!doctype html>
+<html lang="ru">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Игра 1: Щит от тролля</title>
+	<style>
+		:root {
+			--licorice: #1c110a;
+			--cardinal: #c52233;
+			--paper: #f5efe9;
+			--ink: #120b07;
+			--soft: #ead8cc;
+			--ok: #1f8f4d;
+			--warn: #a86b00;
+			--bad: #a11f2a;
+			--shadow: 0 16px 40px rgba(28, 17, 10, 0.22);
+			--radius: 18px;
+			color-scheme: light;
+		}
+
+		:root[data-theme="dark"] {
+			--paper: #f2e5db;
+			--ink: #f7eee7;
+			--soft: #3a2a22;
+			--ok: #69d493;
+			--warn: #f3c15b;
+			--bad: #ff8d9a;
+			--shadow: 0 14px 30px rgba(17, 11, 8, 0.32);
+			color-scheme: dark;
+		}
+
+		* {
+			box-sizing: border-box;
+		}
+
+		html,
+		body {
+			margin: 0;
+			padding: 0;
+			scroll-behavior: smooth;
+		}
+
+		body {
+			font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+			color: var(--ink);
+			background:
+				radial-gradient(circle at 12% 10%, rgba(197, 34, 51, 0.2) 0%, transparent 28%),
+				radial-gradient(circle at 90% 82%, rgba(197, 34, 51, 0.25) 0%, transparent 34%),
+				linear-gradient(165deg, #fffaf6 0%, #f4e6dc 52%, #f9f0ea 100%);
+			min-height: 100vh;
+			line-height: 1.6;
+		}
+
+		.page {
+			width: min(1120px, 94vw);
+			margin: 0 auto;
+			padding: 28px 0 60px;
+		}
+
+		.hero {
+			position: relative;
+			overflow: hidden;
+			border-radius: calc(var(--radius) + 8px);
+			padding: 48px clamp(20px, 4vw, 52px);
+			color: var(--paper);
+			box-shadow: var(--shadow);
+			background:
+				linear-gradient(120deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0) 45%),
+				linear-gradient(135deg, var(--licorice) 0%, #2a1810 45%, var(--cardinal) 130%);
+			isolation: isolate;
+		}
+
+		.hero::before,
+		.hero::after {
+			content: "";
+			position: absolute;
+			border-radius: 50%;
+			z-index: -1;
+		}
+
+		.hero::before {
+			width: 320px;
+			height: 320px;
+			top: -140px;
+			right: -80px;
+			background: rgba(197, 34, 51, 0.32);
+		}
+
+		.hero::after {
+			width: 260px;
+			height: 260px;
+			bottom: -120px;
+			left: -90px;
+			background: rgba(255, 255, 255, 0.08);
+		}
+
+		.hero-tools {
+			display: flex;
+			justify-content: flex-end;
+			margin-bottom: 10px;
+		}
+
+		.theme-toggle {
+			font: inherit;
+			font-size: 0.92rem;
+			padding: 8px 12px;
+			border-radius: 10px;
+			cursor: pointer;
+			border: 1px solid rgba(245, 239, 233, 0.45);
+			background: rgba(245, 239, 233, 0.15);
+			color: var(--paper);
+			transition: background 0.16s ease, transform 0.16s ease;
+		}
+
+		.theme-toggle:hover {
+			background: rgba(245, 239, 233, 0.26);
+			transform: translateY(-1px);
+		}
+
+		.theme-toggle:focus-visible {
+			outline: 3px solid rgba(245, 239, 233, 0.45);
+			outline-offset: 2px;
+		}
+
+		.badge {
+			display: inline-block;
+			padding: 6px 12px;
+			border-radius: 999px;
+			border: 1px solid rgba(245, 239, 233, 0.55);
+			background: rgba(245, 239, 233, 0.12);
+			font-size: 0.84rem;
+			letter-spacing: 0.06em;
+			text-transform: uppercase;
+			margin-bottom: 14px;
+		}
+
+		h1,
+		h2,
+		h3 {
+			margin: 0;
+			line-height: 1.2;
+		}
+
+		h1 {
+			font-size: clamp(1.8rem, 4vw, 3rem);
+			max-width: 22ch;
+			text-transform: uppercase;
+		}
+
+		.lead {
+			max-width: 72ch;
+			margin-top: 16px;
+			font-size: clamp(1rem, 2vw, 1.13rem);
+			color: rgba(245, 239, 233, 0.95);
+		}
+
+		.intro-grid {
+			display: grid;
+			grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+			gap: 14px;
+			margin-top: 24px;
+		}
+
+		.intro-card {
+			background: rgba(245, 239, 233, 0.14);
+			border: 1px solid rgba(245, 239, 233, 0.32);
+			border-radius: 14px;
+			padding: 14px 16px;
+			backdrop-filter: blur(3px);
+		}
+
+		.intro-card strong {
+			display: block;
+			margin-bottom: 4px;
+		}
+
+		.section-title {
+			margin: 38px 0 16px;
+			font-size: clamp(1.35rem, 3vw, 1.8rem);
+			color: var(--licorice);
+			text-transform: uppercase;
+			letter-spacing: 0.03em;
+		}
+
+		.game-start {
+			margin-top: 20px;
+			display: grid;
+			gap: 12px;
+			max-width: 620px;
+		}
+
+		.controls {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 10px;
+		}
+
+		.start-button,
+		.submit-button,
+		.ghost-button {
+			font: inherit;
+			border: none;
+			border-radius: 12px;
+			padding: 10px 14px;
+			cursor: pointer;
+			background: var(--cardinal);
+			color: #fff6f2;
+			box-shadow: 0 8px 18px rgba(28, 17, 10, 0.16);
+			transition: transform 0.16s ease, opacity 0.16s ease;
+		}
+
+		.ghost-button {
+			background: var(--licorice);
+		}
+
+		.start-button:hover,
+		.submit-button:hover,
+		.ghost-button:hover {
+			transform: translateY(-1px);
+		}
+
+		.start-button:disabled,
+		.submit-button:disabled,
+		.ghost-button:disabled {
+			opacity: 0.65;
+			cursor: not-allowed;
+		}
+
+		.game-status {
+			font-size: 0.96rem;
+			color: rgba(245, 239, 233, 0.92);
+		}
+
+		.deck-shell {
+			display: grid;
+			gap: 16px;
+		}
+
+		.deck-shell[hidden],
+		.game-card[hidden] {
+			display: none !important;
+		}
+
+		.card {
+			background: linear-gradient(160deg, #fffdfb 0%, #f9eee6 100%);
+			border: 1px solid #ead9cd;
+			border-left: 8px solid var(--cardinal);
+			border-radius: var(--radius);
+			box-shadow: var(--shadow);
+			padding: clamp(18px, 3vw, 26px);
+		}
+
+		.card h3 {
+			font-size: clamp(1.15rem, 2.4vw, 1.45rem);
+			margin-bottom: 8px;
+			color: var(--licorice);
+		}
+
+		.task {
+			margin: 0 0 14px;
+			color: #2c1b13;
+		}
+
+		.options {
+			list-style: none;
+			margin: 0;
+			padding: 0;
+			display: grid;
+			gap: 10px;
+		}
+
+		.option-button {
+			width: 100%;
+			text-align: left;
+			font: inherit;
+			cursor: pointer;
+			border-radius: 12px;
+			padding: 10px 12px;
+			border: 1px solid #dfcdbf;
+			background: #fff8f3;
+			color: var(--ink);
+			transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
+		}
+
+		.option-button:hover {
+			transform: translateY(-2px);
+			box-shadow: 0 8px 18px rgba(28, 17, 10, 0.12);
+		}
+
+		.option-button:focus-visible {
+			outline: 3px solid rgba(197, 34, 51, 0.38);
+			outline-offset: 2px;
+		}
+
+		.option-button.selected {
+			border-color: rgba(197, 34, 51, 0.55);
+			box-shadow: 0 0 0 2px rgba(197, 34, 51, 0.14);
+		}
+
+		.question-feedback,
+		.boss-feedback,
+		.reflection,
+		.result-panel {
+			margin-top: 12px;
+			padding: 12px 14px;
+			border-radius: 12px;
+			background: rgba(28, 17, 10, 0.06);
+			border: 1px solid rgba(28, 17, 10, 0.1);
+			color: #3a2a22;
+		}
+
+		.question-feedback[hidden],
+		.boss-feedback[hidden] {
+			display: none;
+		}
+
+		.boss-meta {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 10px;
+			align-items: center;
+			margin-top: 12px;
+		}
+
+		.boss-timer {
+			font-weight: 700;
+			letter-spacing: 0.02em;
+		}
+
+		textarea {
+			width: 100%;
+			min-height: 130px;
+			resize: vertical;
+			padding: 12px;
+			font: inherit;
+			color: var(--ink);
+			background: #fffdfb;
+			border: 1px solid #d7c3b5;
+			border-radius: 12px;
+		}
+
+		.result-grid {
+			display: grid;
+			grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+			gap: 10px;
+		}
+
+		.result-item {
+			background: #fff8f2;
+			border: 1px solid #e4d1c3;
+			border-radius: 10px;
+			padding: 10px;
+		}
+
+		.result-item strong {
+			display: block;
+			font-size: 1.18rem;
+		}
+
+		.status-breakdown {
+			display: block;
+			margin-top: 6px;
+			font-size: 0.84rem;
+			opacity: 0.88;
+		}
+
+		.status-chip {
+			font-weight: 700;
+		}
+
+		.status-chip.positive {
+			color: var(--ok);
+		}
+
+		.status-chip.neutral {
+			color: var(--warn);
+		}
+
+		.status-chip.negative {
+			color: var(--bad);
+		}
+
+		.status-sep {
+			opacity: 0.62;
+			padding: 0 4px;
+		}
+
+		.footer {
+			margin-top: 28px;
+			font-size: 0.95rem;
+			color: rgba(18, 11, 7, 0.78);
+		}
+
+		:root[data-theme="dark"] body {
+			background:
+				radial-gradient(circle at 12% 10%, rgba(197, 34, 51, 0.16) 0%, transparent 30%),
+				radial-gradient(circle at 90% 82%, rgba(197, 34, 51, 0.14) 0%, transparent 36%),
+				linear-gradient(165deg, #2a1d17 0%, #34261f 52%, #3e2d25 100%);
+		}
+
+		:root[data-theme="dark"] .section-title {
+			color: #f2dbcb;
+		}
+
+		:root[data-theme="dark"] .card {
+			background: linear-gradient(160deg, #4a372d 0%, #544036 100%);
+			border-color: #75584a;
+		}
+
+		:root[data-theme="dark"] .card h3 {
+			color: #f7e8de;
+		}
+
+		:root[data-theme="dark"] .task {
+			color: #f0ddd1;
+		}
+
+		:root[data-theme="dark"] .option-button {
+			background: #5b4438;
+			border-color: #7c5f50;
+			color: #f6ebe4;
+		}
+
+		:root[data-theme="dark"] .option-button:hover {
+			box-shadow: 0 8px 18px rgba(24, 15, 11, 0.25);
+		}
+
+		:root[data-theme="dark"] .option-button.selected {
+			border-color: rgba(197, 34, 51, 0.78);
+			box-shadow: 0 0 0 2px rgba(197, 34, 51, 0.2);
+		}
+
+		:root[data-theme="dark"] .question-feedback,
+		:root[data-theme="dark"] .boss-feedback,
+		:root[data-theme="dark"] .reflection,
+		:root[data-theme="dark"] .result-panel {
+			background: rgba(255, 239, 228, 0.1);
+			border-color: rgba(255, 239, 228, 0.24);
+			color: #f7ece4;
+		}
+
+		:root[data-theme="dark"] .result-item {
+			background: #5a4337;
+			border-color: #7f6354;
+			color: #f6ebe4;
+		}
+
+		:root[data-theme="dark"] .status-breakdown {
+			color: rgba(246, 235, 228, 0.92);
+		}
+
+		:root[data-theme="dark"] .status-chip.positive {
+			color: #85e1aa;
+		}
+
+		:root[data-theme="dark"] .status-chip.neutral {
+			color: #ffd07b;
+		}
+
+		:root[data-theme="dark"] .status-chip.negative {
+			color: #ff9fa7;
+		}
+
+		:root[data-theme="dark"] textarea {
+			background: #533d32;
+			border-color: #785b4d;
+			color: #faf0e9;
+		}
+
+		:root[data-theme="dark"] textarea::placeholder {
+			color: #d8c1b3;
+		}
+
+		:root[data-theme="dark"] .footer {
+			color: rgba(250, 237, 228, 0.84);
+		}
+
+		:root[data-theme="dark"] .game-status {
+			color: rgba(250, 235, 225, 0.9);
+		}
+
+		:root[data-theme="dark"] .intro-card {
+			background: rgba(255, 239, 228, 0.11);
+			border-color: rgba(255, 239, 228, 0.26);
+		}
+
+		:root[data-theme="dark"] .ghost-button {
+			background: #4c382e;
+		}
+
+		:root[data-theme="dark"] .theme-toggle {
+			background: rgba(255, 239, 228, 0.16);
+			border-color: rgba(255, 239, 228, 0.4);
+		}
+
+		/* ─── Модальные окна ─── */
+		.modal-overlay {
+			position: fixed;
+			inset: 0;
+			background: rgba(28, 17, 10, 0.72);
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			z-index: 900;
+			padding: 20px;
+			backdrop-filter: blur(4px);
+		}
+
+		.modal-card {
+			background: var(--paper);
+			color: var(--ink);
+			border-radius: var(--radius);
+			padding: clamp(24px, 4vw, 44px);
+			width: min(480px, 100%);
+			box-shadow: var(--shadow);
+			display: flex;
+			flex-direction: column;
+			gap: 14px;
+		}
+
+		.instructions-card {
+			width: min(560px, 100%);
+		}
+
+		.modal-title {
+			margin: 0;
+			font-size: 1.4rem;
+		}
+
+		.modal-icon {
+			font-size: 2.4rem;
+			text-align: center;
+		}
+
+		.modal-message {
+			margin: 0;
+			line-height: 1.6;
+		}
+
+		.modal-error {
+			color: var(--bad);
+			font-size: 0.9rem;
+			padding: 8px 12px;
+			background: rgba(161, 31, 42, 0.1);
+			border-radius: 8px;
+			border: 1px solid rgba(161, 31, 42, 0.3);
+		}
+
+		.field-label {
+			font-weight: 600;
+			font-size: 0.95rem;
+			margin-bottom: -6px;
+		}
+
+		.field-input {
+			width: 100%;
+			padding: 11px 14px;
+			border-radius: 10px;
+			border: 2px solid rgba(28, 17, 10, 0.2);
+			font-family: inherit;
+			font-size: 1rem;
+			background: white;
+			color: var(--ink);
+			outline: none;
+			transition: border-color 0.2s;
+		}
+
+		.field-input:focus {
+			border-color: var(--cardinal);
+		}
+
+		.instruction-list {
+			padding-left: 20px;
+			margin: 0;
+			display: flex;
+			flex-direction: column;
+			gap: 8px;
+		}
+
+		:root[data-theme="dark"] .modal-card {
+			background: #3e2d25;
+			color: #f7eee7;
+		}
+
+		:root[data-theme="dark"] .field-input {
+			background: #533d32;
+			border-color: #785b4d;
+			color: #faf0e9;
+		}
+
+		:root[data-theme="dark"] .modal-error {
+			background: rgba(255, 141, 154, 0.15);
+			border-color: rgba(255, 141, 154, 0.4);
+			color: var(--bad);
+		}
+
+		@media (max-width: 768px) {
+			.hero {
+				padding: 32px 18px;
+			}
+
+			.badge {
+				font-size: 0.78rem;
+			}
+		}
+	</style>
+	<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+</head>
+<body>
+	<main class="page">
+		<section class="hero">
+			<div class="hero-tools">
+				<button id="themeToggle" class="theme-toggle" type="button" aria-pressed="false">Тёмная тема</button>
+			</div>
+			<span class="badge">Игра по медиабезопасности</span>
+			<h1>Игра 1: Щит от тролля</h1>
+			<p class="lead">
+				Выбирай решения в сложных онлайн-ситуациях. За полезные действия получаешь +1, за токсичные -1,
+				за игнорирование 0. После 6 раундов тебя ждёт финальный босс с таймером на 2 минуты.
+			</p>
+			<div class="intro-grid">
+				<div class="intro-card"><strong>Цель</strong>Научиться безопасной и поддерживающей реакции в сети.</div>
+				<div class="intro-card"><strong>Формат</strong>Случайный порядок ситуаций, по одной карточке.</div>
+				<div class="intro-card"><strong>Финал</strong>Свободный ответ с автооценкой по ключевым действиям.</div>
+			</div>
+
+			<div class="game-start">
+				<div class="controls">
+					<button id="startGameButton" class="start-button" type="button">Начать игру</button>
+				</div>
+				<div id="gameStatus" class="game-status">Нажмите «Начать игру», введите имя и фамилию.</div>
+			</div>
+		</section>
+
+		<h2 class="section-title">Ситуации</h2>
+		<section id="scenarioDeck" class="deck-shell" hidden>
+			<article class="card game-card" data-game-card>
+				<h3>Ситуация 1: Мем с оскорблением</h3>
+				<p class="task">Тебе прислали оскорбительный мем и ждут ответ в чате.</p>
+				<ul class="options" data-question="1">
+					<li><button class="option-button" type="button" data-score="1" data-status="correct">Сохранить скриншот, заблокировать и сообщить взрослому</button></li>
+					<li><button class="option-button" type="button" data-score="-1" data-status="wrong">Ответить таким же оскорблением</button></li>
+					<li><button class="option-button" type="button" data-score="0" data-status="ignore">Промолчать и ничего не делать</button></li>
+					<li><button class="option-button" type="button" data-score="-1" data-status="wrong">Поставить 😂 и переслать другим — это же просто шутка</button></li>
+					<li><button class="option-button" type="button" data-score="0" data-status="ignore">Написать в чат «прекратите» — и ждать реакции</button></li>
+					<li><button class="option-button" type="button" data-score="-1" data-status="wrong">Переслать мем всем контактам, чтобы пристыдить отправителя</button></li>
+					<li><button class="option-button" type="button" data-score="0" data-status="ignore">Поставить реакцию 👀 и посмотреть, что будет дальше</button></li>
+					<li><button class="option-button" type="button" data-score="-1" data-status="wrong">Написать публичный ответ с оскорблением в адрес всей компании</button></li>
+					<li><button class="option-button" type="button" data-score="0" data-status="ignore">Попросить общего друга разобраться вместо тебя</button></li>
+				</ul>
+				<div class="question-feedback" hidden></div>
+			</article>
+
+			<article class="card game-card" data-game-card>
+				<h3>Ситуация 2: Хочется написать грубость</h3>
+				<p class="task">После конфликта хочется резко ответить обидчику.</p>
+				<ul class="options" data-question="2">
+					<li><button class="option-button" type="button" data-score="1" data-status="correct">Сделать паузу и применить правило СТОП</button></li>
+					<li><button class="option-button" type="button" data-score="-1" data-status="wrong">Сразу написать злой комментарий</button></li>
+					<li><button class="option-button" type="button" data-score="0" data-status="ignore">Отложить разговор без плана</button></li>
+					<li><button class="option-button" type="button" data-score="0" data-status="ignore">Попросить друга ответить вместо тебя</button></li>
+					<li><button class="option-button" type="button" data-score="-1" data-status="wrong">Написать резкий ответ в черновик — и всё равно отправить</button></li>
+					<li><button class="option-button" type="button" data-score="0" data-status="ignore">Рассказать постороннему о конфликте, не предпринимая ничего самому</button></li>
+					<li><button class="option-button" type="button" data-score="-1" data-status="wrong">Написать серию злых сообщений и сразу удалить их</button></li>
+					<li><button class="option-button" type="button" data-score="0" data-status="ignore">Поставить статус «не беспокоить» и ждать, пока всё само утихнет</button></li>
+					<li><button class="option-button" type="button" data-score="-1" data-status="wrong">Пожаловаться другим на обидчика, раздув конфликт сильнее</button></li>
+				</ul>
+				<div class="question-feedback" hidden></div>
+			</article>
+
+			<article class="card game-card" data-game-card>
+				<h3>Ситуация 3: Травля в общем чате</h3>
+				<p class="task">В чате смеются над одноклассником, тебя отмечают в сообщениях.</p>
+				<ul class="options" data-question="3">
+					<li><button class="option-button" type="button" data-score="1" data-status="correct">Остановить травлю и поддержать одноклассника</button></li>
+					<li><button class="option-button" type="button" data-score="-1" data-status="wrong">Поддержать насмешки, чтобы не выделяться</button></li>
+					<li><button class="option-button" type="button" data-score="0" data-status="ignore">Выйти из чата и не вмешиваться</button></li>
+					<li><button class="option-button" type="button" data-score="0" data-status="ignore">Написать пострадавшему в личку, но в чате промолчать</button></li>
+					<li><button class="option-button" type="button" data-score="-1" data-status="wrong">Добавить нейтральный смайл, чтобы не обострять</button></li>
+					<li><button class="option-button" type="button" data-score="0" data-status="ignore">Перейти в другой чат и сделать вид, что не заметил</button></li>
+					<li><button class="option-button" type="button" data-score="-1" data-status="wrong">Лайкнуть обидное сообщение — все так делают</button></li>
+					<li><button class="option-button" type="button" data-score="0" data-status="ignore">Написать модератору, но не поддерживать пострадавшего напрямую</button></li>
+					<li><button class="option-button" type="button" data-score="-1" data-status="wrong">Скинуть скриншоты другим, чтобы посмеяться в своём кругу</button></li>
+				</ul>
+				<div class="question-feedback" hidden></div>
+			</article>
+
+			<article class="card game-card" data-game-card>
+				<h3>Ситуация 4: Подозрительный аккаунт</h3>
+				<p class="task">Аккаунт с фото друга просит пароль «срочно для игры».</p>
+				<ul class="options" data-question="4">
+					<li><button class="option-button" type="button" data-score="1" data-status="correct">Проверить аккаунт через личный контакт и не давать данные</button></li>
+					<li><button class="option-button" type="button" data-score="-1" data-status="wrong">Отправить пароль, чтобы помочь</button></li>
+					<li><button class="option-button" type="button" data-score="0" data-status="ignore">Не отвечать и никак не проверять</button></li>
+					<li><button class="option-button" type="button" data-score="-1" data-status="wrong">Написать другу в этот же аккаунт и на всякий случай дать пароль</button></li>
+					<li><button class="option-button" type="button" data-score="0" data-status="ignore">Попросить прислать фото с датой для «проверки» — и ждать</button></li>
+					<li><button class="option-button" type="button" data-score="-1" data-status="wrong">Дать пароль, но сразу сменить его после — «на всякий случай»</button></li>
+					<li><button class="option-button" type="button" data-score="0" data-status="ignore">Попросить взрослого разобраться, но самому не реагировать</button></li>
+					<li><button class="option-button" type="button" data-score="-1" data-status="wrong">Переслать запрос другому другу и попросить его решить</button></li>
+					<li><button class="option-button" type="button" data-score="0" data-status="ignore">Ответить «подумаю» и оставить переписку без продолжения</button></li>
+				</ul>
+				<div class="question-feedback" hidden></div>
+			</article>
+
+			<article class="card game-card" data-game-card>
+				<h3>Ситуация 5: Давление компании</h3>
+				<p class="task">Друзья просят репостнуть обидную шутку про знакомого.</p>
+				<ul class="options" data-question="5">
+					<li><button class="option-button" type="button" data-score="1" data-status="correct">Отказаться и мягко обозначить границу</button></li>
+					<li><button class="option-button" type="button" data-score="-1" data-status="wrong">Сделать репост ради одобрения</button></li>
+					<li><button class="option-button" type="button" data-score="0" data-status="ignore">Промолчать и ничего не предпринимать</button></li>
+					<li><button class="option-button" type="button" data-score="-1" data-status="wrong">Отправить шутку только в личку знакомому — не в общий чат</button></li>
+					<li><button class="option-button" type="button" data-score="0" data-status="ignore">Попросить друзей объяснить, почему это смешно</button></li>
+					<li><button class="option-button" type="button" data-score="-1" data-status="wrong">Сделать репост с подписью «ну и что такого» — пусть сами решают</button></li>
+					<li><button class="option-button" type="button" data-score="0" data-status="ignore">Выйти из беседы, не объяснив причины</button></li>
+					<li><button class="option-button" type="button" data-score="-1" data-status="wrong">Написать знакомому о шутке, чтобы он сам разобрался с друзьями</button></li>
+					<li><button class="option-button" type="button" data-score="0" data-status="ignore">Поставить лайк посту, но в личку извиниться перед знакомым</button></li>
+				</ul>
+				<div class="question-feedback" hidden></div>
+			</article>
+
+			<article class="card game-card" data-game-card>
+				<h3>Ситуация 6: Поздний вечер и стресс</h3>
+				<p class="task">Ты устал, а в комментариях провокация.</p>
+				<ul class="options" data-question="6">
+					<li><button class="option-button" type="button" data-score="1" data-status="correct">Сделать паузу, выдохнуть и ответить позже</button></li>
+					<li><button class="option-button" type="button" data-score="-1" data-status="wrong">Резко ответить на эмоциях</button></li>
+					<li><button class="option-button" type="button" data-score="0" data-status="ignore">Закрыть приложение без дальнейших действий</button></li>
+					<li><button class="option-button" type="button" data-score="0" data-status="ignore">Написать длинное объяснение своей позиции прямо сейчас</button></li>
+					<li><button class="option-button" type="button" data-score="-1" data-status="wrong">Попросить другого человека ответить за тебя — но агрессивно</button></li>
+					<li><button class="option-button" type="button" data-score="0" data-status="ignore">Сохранить провокацию и завтра посмотреть, стоит ли отвечать</button></li>
+					<li><button class="option-button" type="button" data-score="-1" data-status="wrong">Ответить саркастично — пусть знают, что ты не дурак</button></li>
+					<li><button class="option-button" type="button" data-score="0" data-status="ignore">Пожаловаться на пост, но самому ничего не писать</button></li>
+					<li><button class="option-button" type="button" data-score="-1" data-status="wrong">Написать длинный эмоциональный ответ и отправить сразу</button></li>
+				</ul>
+				<div class="question-feedback" hidden></div>
+			</article>
+
+			<article class="card game-card" data-game-card data-boss-card hidden>
+				<h3>Финальный босс: Антикризисный план</h3>
+				<p class="task">Опиши по шагам, как ты действуешь при травле в сети.</p>
+				<textarea id="bossPlanInput" placeholder="Например: пауза, СТОП, анализ, скриншоты, взрослым, поддержка друга..."></textarea>
+				<div class="boss-meta">
+					<span class="boss-timer">Таймер: <span id="bossTimer">02:00</span></span>
+					<span>Состояние ответа: <strong id="bossAnswerState">нет ответа</strong></span>
+				</div>
+				<div class="controls">
+					<button id="submitBossButton" class="submit-button" type="button">Проверить ответ</button>
+				</div>
+				<div id="bossFeedback" class="boss-feedback" hidden></div>
+			</article>
+		</section>
+
+		<section class="result-panel">
+			<h2 class="section-title" style="margin-top: 0;">Результат</h2>
+			<div class="result-grid">
+				<div class="result-item"><span>Баллы за ситуации и босса</span><strong id="totalScore">0</strong></div>
+				<div class="result-item"><span>Отвечено ситуаций</span><strong id="answeredCount">0</strong></div>
+				<div class="result-item"><span>Баллы босса</span><strong id="bossScore">0</strong></div>
+				<div class="result-item">
+					<span>Статус</span>
+					<strong id="finalStatus">Выберите варианты в ситуациях</strong>
+					<small id="statusBreakdown" class="status-breakdown">
+						<span class="status-chip positive">+1: 0</span><span class="status-sep">|</span><span class="status-chip neutral">0: 0</span><span class="status-sep">|</span><span class="status-chip negative">-1: 0</span>
+					</small>
+				</div>
+			</div>
+		</section>
+
+		<!-- Модальное окно: ввод имени -->
+		<div id="nameModal" class="modal-overlay" hidden>
+			<div class="modal-card">
+				<h2 class="modal-title">Представьтесь, пожалуйста</h2>
+				<label class="field-label" for="inputFirstName">Имя</label>
+				<input id="inputFirstName" class="field-input" type="text" placeholder="Например: Иван" maxlength="60" autocomplete="given-name" />
+				<label class="field-label" for="inputLastName">Фамилия</label>
+				<input id="inputLastName" class="field-input" type="text" placeholder="Например: Иванов" maxlength="60" autocomplete="family-name" />
+				<div id="nameModalError" class="modal-error" hidden></div>
+				<button id="checkNameButton" class="start-button" type="button">Продолжить</button>
+			</div>
+		</div>
+
+		<!-- Модальное окно: инструкция -->
+		<div id="instructionsModal" class="modal-overlay" hidden>
+			<div class="modal-card instructions-card">
+				<h2 class="modal-title">Как играть?</h2>
+				<p>Привет, <strong id="playerGreeting"></strong>! Добро пожаловать в игру «Щит от тролля».</p>
+				<ul class="instruction-list">
+					<li>Тебе предстоит пройти <strong>6 ситуаций</strong> из онлайн-жизни.</li>
+					<li>В каждой ситуации выбери <strong>один вариант</strong> действия.</li>
+					<li>Правильный ответ даёт <strong>+1</strong>, токсичный — <strong>−1</strong>, нейтральный — <strong>0</strong>.</li>
+					<li>После 6 ситуаций тебя ждёт <strong>финальный босс</strong>: напиши план действий при травле в сети.</li>
+					<li>На ответ боссу у тебя <strong>2 минуты</strong>.</li>
+					<li>Результат сохраняется автоматически. Тест можно пройти <strong>только один раз</strong>.</li>
+				</ul>
+				<button id="beginGameButton" class="start-button" type="button">Поехали!</button>
+			</div>
+		</div>
+
+		<!-- Модальное окно: уже проходил -->
+		<div id="alreadyPlayedModal" class="modal-overlay" hidden>
+			<div class="modal-card">
+				<div class="modal-icon">🚫</div>
+				<h2 class="modal-title">Тест уже пройден</h2>
+				<p id="alreadyPlayedMessage" class="modal-message"></p>
+			</div>
+		</div>
+	</main>
+
+	<script>
+		(() => {
+			const startGameButton = document.getElementById('startGameButton');
+			const gameStatusEl = document.getElementById('gameStatus');
+			const scenarioDeckEl = document.getElementById('scenarioDeck');
+			const questionCards = Array.from(document.querySelectorAll('[data-game-card]:not([data-boss-card])'));
+			const bossCardEl = document.querySelector('[data-boss-card]');
+			const bossPlanInputEl = document.getElementById('bossPlanInput');
+			const bossTimerEl = document.getElementById('bossTimer');
+			const bossFeedbackEl = document.getElementById('bossFeedback');
+			const submitBossButton = document.getElementById('submitBossButton');
+			const bossScoreEl = document.getElementById('bossScore');
+			const themeToggleButton = document.getElementById('themeToggle');
+			const totalScoreEl = document.getElementById('totalScore');
+			const answeredCountEl = document.getElementById('answeredCount');
+			const finalStatusEl = document.getElementById('finalStatus');
+			const statusBreakdownEl = document.getElementById('statusBreakdown');
+			const bossAnswerStateEl = document.getElementById('bossAnswerState');
+
+			// Модальные элементы
+			const nameModalEl = document.getElementById('nameModal');
+			const instructionsModalEl = document.getElementById('instructionsModal');
+			const alreadyPlayedModalEl = document.getElementById('alreadyPlayedModal');
+			const checkNameButtonEl = document.getElementById('checkNameButton');
+			const beginGameButtonEl = document.getElementById('beginGameButton');
+			const inputFirstNameEl = document.getElementById('inputFirstName');
+			const inputLastNameEl = document.getElementById('inputLastName');
+			const nameModalErrorEl = document.getElementById('nameModalError');
+			const alreadyPlayedMessageEl = document.getElementById('alreadyPlayedMessage');
+			const playerGreetingEl = document.getElementById('playerGreeting');
+
+			// Supabase — замените URL и ключ на свои значения из панели Supabase → Settings → API
+			const SUPABASE_URL = 'https://sqfozasyqryjfczarvlj.supabase.co';
+			const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNxZm96YXN5cXJ5amZjemFydmxqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyMjg3MDIsImV4cCI6MjA5NTgwNDcwMn0.GafyeyqMuVUTF1HMDaYkiMo4H8OF3em6YpPkLuEasOQ';
+			const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+			let playerFirstName = '';
+			let playerLastName = '';
+
+			const themeStorageKey = 'shield-from-troll-theme';
+			const selectedByQuestion = new Map();
+			const scenarioGuides = {
+				1: {
+					correct: 'Сохраняю скриншот, блокирую, сообщаю взрослому.',
+					wrong: 'Отвечаю оскорблением и подливаю конфликт.',
+					ignore: 'Игнорирую без защиты: риск продолжения травли.'
+				},
+				2: {
+					correct: 'Делаю паузу и применяю СТОП: тон, факты, последствия.',
+					wrong: 'Пишу злой ответ на эмоциях.',
+					ignore: 'Откладываю без плана: может затянуться.'
+				},
+				3: {
+					correct: 'Останавливаю травлю и поддерживаю того, кого задели.',
+					wrong: 'Присоединяюсь к травле.',
+					ignore: 'Молчу и не помогаю.'
+				},
+				4: {
+					correct: 'Проверяю аккаунт и не даю пароль/данные.',
+					wrong: 'Отправляю пароль.',
+					ignore: 'Не отвечаю, но и не проверяю.'
+				},
+				5: {
+					correct: 'Отказываюсь от репоста и обозначаю границу.',
+					wrong: 'Распространяю травлю.',
+					ignore: 'Пассивно наблюдаю.'
+				},
+				6: {
+					correct: 'Пауза, восстановление и ответ позже.',
+					wrong: 'Резкий ответ в состоянии усталости.',
+					ignore: 'Ухожу без последующих действий.'
+				}
+			};
+
+			const gameState = {
+				started: false,
+				order: [],
+				currentIndex: -1,
+				locked: false,
+				advanceTimeoutId: null,
+				bossTimerId: null,
+				bossSecondsLeft: 120,
+				bossScore: 0,
+				bossEvaluated: false
+			};
+
+			function applyTheme(theme) {
+				document.documentElement.setAttribute('data-theme', theme);
+				const isDark = theme === 'dark';
+				themeToggleButton.textContent = isDark ? 'Светлая тема' : 'Тёмная тема';
+				themeToggleButton.setAttribute('aria-pressed', String(isDark));
+			}
+
+			function shuffleItems(items) {
+				const clone = items.slice();
+				for (let i = clone.length - 1; i > 0; i -= 1) {
+					const j = Math.floor(Math.random() * (i + 1));
+					[clone[i], clone[j]] = [clone[j], clone[i]];
+				}
+				return clone;
+			}
+
+			function setGameStatus(message) {
+				gameStatusEl.textContent = message;
+			}
+
+			function showQuestionCard(card) {
+				questionCards.forEach((item) => {
+					item.hidden = item !== card;
+				});
+				bossCardEl.hidden = true;
+			}
+
+			function clearQuestionFeedback(card) {
+				const feedbackEl = card.querySelector('.question-feedback');
+				feedbackEl.hidden = true;
+				feedbackEl.textContent = '';
+			}
+
+			function buildScenarioFeedback(questionId, optionScore) {
+				const guide = scenarioGuides[questionId];
+				const selectedLine = optionScore > 0
+					? 'Выбран полезный вариант.'
+					: optionScore < 0
+						? 'Выбран рискованный вариант.'
+						: 'Выбран нейтральный вариант (0).';
+				return [
+					`<strong>${selectedLine}</strong>`,
+					`<div><strong>Правильное действие:</strong> ${guide.correct}</div>`,
+					`<div><strong>Неправильное действие:</strong> ${guide.wrong}</div>`,
+					`<div><strong>Игнорирование:</strong> ${guide.ignore}</div>`
+				].join('');
+			}
+
+			function updateQuestionFeedback(card, questionId, optionScore) {
+				const feedbackEl = card.querySelector('.question-feedback');
+				feedbackEl.innerHTML = buildScenarioFeedback(questionId, optionScore);
+				feedbackEl.hidden = false;
+			}
+
+			function getFinalStatusByAnswers(stats) {
+				const maxCount = Math.max(stats.positive, stats.neutral, stats.negative);
+				if (maxCount === 0) return 'Выберите варианты в ситуациях';
+
+				const leaders = [];
+				if (stats.positive === maxCount) leaders.push('Защитник');
+				if (stats.neutral === maxCount) leaders.push('Наблюдатель');
+				if (stats.negative === maxCount) leaders.push('Токсик');
+
+				if (leaders.length === 1) return leaders[0];
+
+				// При ничьей выбираем нейтральный статус.
+				return 'Наблюдатель';
+			}
+
+			function renderStatusBreakdown(stats) {
+				return `<span class="status-chip positive">+1: ${stats.positive}</span><span class="status-sep">|</span><span class="status-chip neutral">0: ${stats.neutral}</span><span class="status-sep">|</span><span class="status-chip negative">-1: ${stats.negative}</span>`;
+			}
+
+			function updateTotalScore() {
+				let score = 0;
+				const statusStats = {
+					positive: 0,
+					negative: 0,
+					neutral: 0
+				};
+				selectedByQuestion.forEach((entry) => {
+					score += entry.score;
+					if (entry.score > 0) statusStats.positive += 1;
+					else if (entry.score < 0) statusStats.negative += 1;
+					else statusStats.neutral += 1;
+				});
+				score += gameState.bossScore;
+				if (gameState.bossEvaluated) {
+					if (gameState.bossScore > 0) statusStats.positive += 1;
+					else if (gameState.bossScore < 0) statusStats.negative += 1;
+					else statusStats.neutral += 1;
+				}
+				totalScoreEl.textContent = String(score);
+				answeredCountEl.textContent = String(selectedByQuestion.size);
+				statusBreakdownEl.innerHTML = renderStatusBreakdown(statusStats);
+
+				const totalResponses = statusStats.positive + statusStats.negative + statusStats.neutral;
+				if (totalResponses === 0) {
+					finalStatusEl.textContent = 'Выберите варианты в ситуациях';
+					statusBreakdownEl.innerHTML = renderStatusBreakdown({ positive: 0, neutral: 0, negative: 0 });
+					return;
+				}
+
+				const status = getFinalStatusByAnswers(statusStats);
+				const suffix = gameState.bossEvaluated ? '' : '(предварительно)';
+				finalStatusEl.textContent = `${status}${suffix}`;
+			}
+
+			function updateBossAnswerState() {
+				const hasAnswer = bossPlanInputEl.value.trim().length > 0;
+				bossAnswerStateEl.textContent = hasAnswer ? 'ответ введён' : 'нет ответа';
+			}
+
+			function startBossTimer() {
+				gameState.bossSecondsLeft = 120;
+				bossTimerEl.textContent = '02:00';
+				if (gameState.bossTimerId) {
+					window.clearInterval(gameState.bossTimerId);
+				}
+				gameState.bossTimerId = window.setInterval(() => {
+					gameState.bossSecondsLeft -= 1;
+					const minutes = String(Math.floor(gameState.bossSecondsLeft / 60)).padStart(2, '0');
+					const seconds = String(gameState.bossSecondsLeft % 60).padStart(2, '0');
+					bossTimerEl.textContent = `${minutes}:${seconds}`;
+					if (gameState.bossSecondsLeft <= 0) {
+						window.clearInterval(gameState.bossTimerId);
+						gameState.bossTimerId = null;
+						bossTimerEl.textContent = '00:00';
+						setGameStatus('Время босса вышло. Ответ отправлен на проверку.');
+						evaluateBossAnswer(true);
+					}
+				}, 1000);
+			}
+
+			function getBossStepScores(answerText) {
+				const normalized = answerText.toLowerCase();
+				if (!normalized.trim()) {
+					return {
+						score: 0,
+						breakdown: ['0: Ответ пустой или игнорирование'],
+						positiveHits: [],
+						negativeHits: [],
+						neutralHits: ['Пустой ответ']
+					};
+				}
+
+				const positiveChecks = [
+					{ label: 'Применяю СТОП / паузу', patterns: [/\bстоп\b/, /пауза/, /успокои?/, /не отвеча/, /подыш/] },
+					{ label: 'Спокойно анализирую ситуацию', patterns: [/анализир/, /рационал/, /обдум/, /взвеш/] },
+					{ label: 'Сохраняю доказательства', patterns: [/скриншот/, /скрин/, /доказатель/, /сохраняю/, /ссылка/] },
+					{ label: 'Блокирую и отправляю жалобу', patterns: [/блокир/, /жалоб/, /репорт/, /пожалуйт?с?я/] },
+					{ label: 'Обращаюсь к взрослому / поддерживаю друга', patterns: [/взросл/, /родител/, /учител/, /куратор/, /другу/, /поддерж/, /помогу/] },
+					{ label: 'Проверяю источник и фейки', patterns: [/провер/, /источник/, /фейк/, /подлин/] }
+				];
+
+				const negativeChecks = [
+					{ label: 'Оскорбляю в ответ', patterns: [/сам ты/, /урод/, /лох/, /туп/, /идиот/, /без вкуса/] },
+					{ label: 'Передаю пароль или личные данные', patterns: [/пароль/, /логин/, /код/, /sms/, /данн/] },
+					{ label: 'Поддерживаю травлю', patterns: [/смеюс?ь/, /присоединяюсь/, /репост/, /травлю/] },
+					{ label: 'Мщу и разгоняю конфликт', patterns: [/месть/, /отомщу/, /провоцир/, /разгоняю конфликт/] }
+				];
+
+				const neutralChecks = [
+					{ label: 'Игнорирование / бездействие', patterns: [/ничего не делаю/, /игнор/, /молчу/, /не мое дело/, /промолчу/, /ухожу/] }
+				];
+
+				const breakdown = [];
+				const positiveHits = [];
+				const negativeHits = [];
+				const neutralHits = [];
+				let score = 0;
+
+				positiveChecks.forEach((item) => {
+					if (item.patterns.some((pattern) => pattern.test(normalized))) {
+						score += 1;
+						positiveHits.push(item.label);
+						breakdown.push(`+1: ${item.label}`);
+					}
+				});
+
+				negativeChecks.forEach((item) => {
+					if (item.patterns.some((pattern) => pattern.test(normalized))) {
+						score -= 1;
+						negativeHits.push(item.label);
+						breakdown.push(`-1: ${item.label}`);
+					}
+				});
+
+				neutralChecks.forEach((item) => {
+					if (item.patterns.some((pattern) => pattern.test(normalized))) {
+						neutralHits.push(item.label);
+					}
+				});
+
+				if (breakdown.length === 0) {
+					breakdown.push(neutralHits.length > 0
+						? '0: Зафиксировано игнорирование без явного вреда'
+						: '0: Явные ключевые действия не найдены');
+				}
+
+				return { score, breakdown, positiveHits, negativeHits, neutralHits };
+			}
+
+			function renderBossFeedback(result) {
+				bossFeedbackEl.hidden = false;
+				bossFeedbackEl.innerHTML = `
+					<div><strong>Оценка ИИ:</strong> ${result.score >= 0 ? '+' : ''}${result.score} балл(а/ов)</div>
+					<div><strong>Что засчитано как правильное:</strong> ${result.positiveHits.length ? result.positiveHits.join('; ') : 'ничего не найдено'}</div>
+					<div><strong>Что засчитано как неправильное:</strong> ${result.negativeHits.length ? result.negativeHits.join('; ') : 'ничего не найдено'}</div>
+					<div><strong>Что засчитано как игнорирование / 0:</strong> ${result.neutralHits.length ? result.neutralHits.join('; ') : 'ничего не найдено'}</div>
+					<div><strong>Подробный разбор:</strong> ${result.breakdown.map((line) => `<div>${line}</div>`).join('')}</div>
+					<div><strong>Полный эталон ответа:</strong></div>
+					<div>Правильно: СТОП/пауза, анализ, скриншоты, жалоба, блокировка, взрослые, поддержка друга, проверка источника.</div>
+					<div>Неправильно: оскорблять в ответ, мстить, провоцировать, отдавать пароль/данные, поддерживать травлю.</div>
+					<div>Игнорирование: молчать, ничего не делать, уходить без помощи, бесконечно откладывать.</div>
+				`;
+			}
+
+			function evaluateBossAnswer(fromTimeout = false) {
+				if (gameState.bossEvaluated) return;
+				const result = getBossStepScores(bossPlanInputEl.value);
+				gameState.bossScore = result.score;
+				gameState.bossEvaluated = true;
+				bossScoreEl.textContent = String(result.score);
+				renderBossFeedback(result);
+				updateBossAnswerState();
+				updateTotalScore();
+				submitBossButton.disabled = true;
+				bossPlanInputEl.disabled = true;
+				if (gameState.bossTimerId) {
+					window.clearInterval(gameState.bossTimerId);
+					gameState.bossTimerId = null;
+				}
+				setGameStatus(fromTimeout ? 'Время вышло. Босс оценен ИИ. Сохранение результата...' : 'Ответ принят. Босс оценен ИИ. Сохранение результата...');
+				saveResult();
+			}
+
+			function advanceGame() {
+				gameState.currentIndex += 1;
+				if (gameState.currentIndex < gameState.order.length) {
+					const nextCard = gameState.order[gameState.currentIndex];
+					showQuestionCard(nextCard);
+					setGameStatus(`Ситуация ${gameState.currentIndex + 1} из ${gameState.order.length}. Выберите один вариант.`);
+					gameState.locked = false;
+					return;
+				}
+
+				scenarioDeckEl.hidden = false;
+				questionCards.forEach((item) => {
+					item.hidden = true;
+				});
+				bossCardEl.hidden = false;
+				setGameStatus('Финальный босс активирован. У вас 2 минуты.');
+				startBossTimer();
+			}
+
+			function startGame() {
+				if (gameState.advanceTimeoutId) {
+					window.clearTimeout(gameState.advanceTimeoutId);
+					gameState.advanceTimeoutId = null;
+				}
+				gameState.started = true;
+				gameState.order = shuffleItems(questionCards);
+				gameState.currentIndex = -1;
+				gameState.locked = false;
+				gameState.bossScore = 0;
+				gameState.bossEvaluated = false;
+				selectedByQuestion.clear();
+				bossPlanInputEl.value = '';
+				bossPlanInputEl.disabled = false;
+				submitBossButton.disabled = false;
+				bossFeedbackEl.hidden = true;
+				bossFeedbackEl.textContent = '';
+				bossScoreEl.textContent = '0';
+				if (gameState.bossTimerId) {
+					window.clearInterval(gameState.bossTimerId);
+					gameState.bossTimerId = null;
+				}
+
+				questionCards.forEach((item) => {
+					item.hidden = true;
+					clearQuestionFeedback(item);
+					item.querySelectorAll('.option-button').forEach((button) => {
+						button.disabled = false;
+						button.classList.remove('selected');
+					});
+				});
+
+				scenarioDeckEl.hidden = false;
+				bossCardEl.hidden = true;
+				startGameButton.disabled = true;
+				setGameStatus('Игра началась. Ситуации будут появляться по одной в случайном порядке.');
+				updateTotalScore();
+				updateBossAnswerState();
+				advanceGame();
+			}
+
+			async function checkAndProceed() {
+				const firstName = inputFirstNameEl.value.trim().replace(/\s+/g, ' ');
+				const lastName = inputLastNameEl.value.trim().replace(/\s+/g, ' ');
+				if (!firstName || !lastName) {
+					nameModalErrorEl.textContent = 'Пожалуйста, заполните оба поля.';
+					nameModalErrorEl.hidden = false;
+					return;
+				}
+				const normalizedFirstName = firstName.toLowerCase();
+				const normalizedLastName = lastName.toLowerCase();
+				nameModalErrorEl.hidden = true;
+				checkNameButtonEl.disabled = true;
+				checkNameButtonEl.textContent = 'Проверка...';
+				try {
+					const { count, error } = await db
+						.from('game_results')
+						.select('id', { count: 'exact', head: true })
+						.eq('first_name', normalizedFirstName)
+						.eq('last_name', normalizedLastName)
+						.limit(1);
+					if (error) throw error;
+
+					const hasExistingRecord = Number(count || 0) > 0;
+
+					if (hasExistingRecord) {
+						nameModalEl.hidden = true;
+						alreadyPlayedMessageEl.textContent =
+							`${firstName} ${lastName}, вы уже проходили этот тест. Повторное прохождение недоступно.`;
+						alreadyPlayedModalEl.hidden = false;
+					} else {
+						playerFirstName = normalizedFirstName;
+						playerLastName = normalizedLastName;
+						nameModalEl.hidden = true;
+						alreadyPlayedModalEl.hidden = true;
+						nameModalErrorEl.textContent = '';
+						nameModalErrorEl.hidden = true;
+						playerGreetingEl.textContent = `${firstName} ${lastName}`;
+						instructionsModalEl.hidden = false;
+					}
+				} catch (err) {
+					alreadyPlayedModalEl.hidden = true;
+					nameModalErrorEl.textContent = `Ошибка проверки на сервере: ${err.message || 'попробуйте ещё раз'}`;
+					nameModalErrorEl.hidden = false;
+					console.error('Supabase error:', err);
+				} finally {
+					checkNameButtonEl.disabled = false;
+					checkNameButtonEl.textContent = 'Продолжить';
+				}
+			}
+
+			async function saveResult() {
+				let totalScore = 0;
+				const stats = { positive: 0, neutral: 0, negative: 0 };
+				selectedByQuestion.forEach((entry) => {
+					totalScore += entry.score;
+					if (entry.score > 0) stats.positive += 1;
+					else if (entry.score < 0) stats.negative += 1;
+					else stats.neutral += 1;
+				});
+				totalScore += gameState.bossScore;
+				if (gameState.bossEvaluated) {
+					if (gameState.bossScore > 0) stats.positive += 1;
+					else if (gameState.bossScore < 0) stats.negative += 1;
+					else stats.neutral += 1;
+				}
+				const finalStatus = getFinalStatusByAnswers(stats);
+				try {
+					const { error } = await db.from('game_results').insert({
+						first_name: playerFirstName,
+						last_name: playerLastName,
+						total_score: totalScore,
+						boss_score: gameState.bossScore,
+						final_status: finalStatus,
+						positive_count: stats.positive,
+						neutral_count: stats.neutral,
+						negative_count: stats.negative
+					});
+					if (error) throw error;
+					setGameStatus('Результат сохранён. Спасибо за участие в игре!');
+				} catch (err) {
+					console.error('Ошибка сохранения результата:', err);
+					setGameStatus('Игра завершена, но результат не удалось сохранить. Обратитесь к организатору.');
+				}
+			}
+
+			function shuffleList(ul) {
+				const items = Array.from(ul.children);
+				for (let i = items.length - 1; i > 0; i--) {
+					const j = Math.floor(Math.random() * (i + 1));
+					ul.appendChild(items[j]);
+					items.splice(j, 1);
+				}
+			}
+
+			questionCards.forEach((card) => {
+				const list = card.querySelector('.options[data-question]');
+				shuffleList(list);
+				const questionId = list.dataset.question;
+				const buttons = Array.from(list.querySelectorAll('.option-button'));
+
+				buttons.forEach((button) => {
+					button.addEventListener('click', () => {
+						if (!gameState.started || gameState.locked) return;
+						gameState.locked = true;
+						buttons.forEach((item) => {
+							item.classList.remove('selected');
+							item.disabled = true;
+						});
+						button.classList.add('selected');
+						const optionScore = Number(button.dataset.score);
+						selectedByQuestion.set(questionId, {
+							score: optionScore,
+							status: button.dataset.status
+						});
+						updateQuestionFeedback(card, Number(questionId), optionScore);
+						updateTotalScore();
+
+						if (gameState.advanceTimeoutId) {
+							window.clearTimeout(gameState.advanceTimeoutId);
+						}
+						gameState.advanceTimeoutId = window.setTimeout(() => {
+							gameState.advanceTimeoutId = null;
+							advanceGame();
+						}, 700);
+					});
+				});
+			});
+
+			themeToggleButton.addEventListener('click', () => {
+				const currentTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+				const nextTheme = currentTheme === 'dark' ? 'light' : 'dark';
+				applyTheme(nextTheme);
+				localStorage.setItem(themeStorageKey, nextTheme);
+			});
+
+			checkNameButtonEl.addEventListener('click', checkAndProceed);
+			inputFirstNameEl.addEventListener('keydown', (e) => {
+				if (e.key === 'Enter') inputLastNameEl.focus();
+			});
+			inputLastNameEl.addEventListener('keydown', (e) => {
+				if (e.key === 'Enter') checkAndProceed();
+			});
+			beginGameButtonEl.addEventListener('click', () => {
+				instructionsModalEl.hidden = true;
+				startGame();
+			});
+
+			startGameButton.addEventListener('click', () => {
+				if (gameState.started) return;
+				nameModalEl.hidden = false;
+				inputFirstNameEl.value = '';
+				inputLastNameEl.value = '';
+				nameModalErrorEl.hidden = true;
+				checkNameButtonEl.disabled = false;
+				checkNameButtonEl.textContent = 'Продолжить';
+				requestAnimationFrame(() => inputFirstNameEl.focus());
+			});
+			bossPlanInputEl.addEventListener('input', updateBossAnswerState);
+			submitBossButton.addEventListener('click', () => evaluateBossAnswer(false));
+
+			const storedTheme = localStorage.getItem(themeStorageKey);
+			const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+			const initialTheme = storedTheme === 'dark' || storedTheme === 'light'
+				? storedTheme
+				: (prefersDark ? 'dark' : 'light');
+			applyTheme(initialTheme);
+
+			scenarioDeckEl.hidden = true;
+			bossCardEl.hidden = true;
+			updateTotalScore();
+			updateBossAnswerState();
+		})();
+	</script>
+</body>
+</html>
